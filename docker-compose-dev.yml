@@ -1,0 +1,11 @@
+version: "3.5"
+services:
+  liquidity-index-bot:
+    container_name: liquidity-index-bot
+    build: .
+    volumes:
+      - ./.env:/app/.env
+      - ./package.json:/app/package.json
+      - ./out:/app/out
+      - ./index.js:/app/index.js
+    command: node /app/index.js
