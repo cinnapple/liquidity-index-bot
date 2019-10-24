@@ -1,8 +1,9 @@
 const puppeteer = require("puppeteer");
 const twitter = require("twitter");
 const fs = require("fs");
+const https = require("https");
 require("dotenv").config();
-process.env.tweet = process.env.tweet === true || process.env.tweet === "true";
+const doTweet = process.env.tweet === true || process.env.tweet === "true";
 
 const url =
   "https://docs.google.com/spreadsheets/u/2/d/1pZ2POpljERK-oV3rusaCmq58U2badn5i9WOCIP9Wtmg/";
@@ -43,11 +44,42 @@ const takeScreenshot = async browser => {
   const page = await browser.newPage();
   await page.setViewport({ width: 1400, height: 1050 });
   await page.goto(url);
+  await page.waitFor(5000);
   await page.screenshot({ path: filePath, clip });
   console.log(`Successfully took a screenshot`);
 };
 
-const tweet = async file => {
+const getSheetData = async () => {
+  return new Promise((resolve, reject) => {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/1pZ2POpljERK-oV3rusaCmq58U2badn5i9WOCIP9Wtmg/values/Aggregate!A1:D100?key=${process.env.google_api_key}`;
+    const req = https.get(url, res => {
+      let body = "";
+      res.on("data", d => {
+        body += d;
+      });
+      res.on("end", () => {
+        const res = JSON.parse(body);
+        console.log(res);
+        const obj = {
+          CurrentDate: res.values.find(r => r.includes("Current Date"))[3],
+          Today: res.values.find(r => r.includes("Today"))[3],
+          AllTimeHigh: res.values.find(r => r.includes("All Time High"))[3]
+        };
+        obj["ATHUpdated"] = obj.Today === obj.AllTimeHigh;
+        resolve(obj);
+      });
+    });
+
+    req.on("error", error => {
+      reject(error);
+    });
+
+    req.end();
+  });
+};
+
+const tweet = async (file, status) => {
+  console.log("Tweeting...");
   const data = fs.readFileSync(file);
 
   // upload the media
@@ -56,14 +88,23 @@ const tweet = async file => {
 
   // tweet about it
   await twitterClient.post("statuses/update", {
-    status: shortUrl,
+    status,
     media_ids: media.media_id_string
   });
   console.log(`Successfully tweeted`);
 };
 
-const run = () =>
-  withBrowser(takeScreenshot).then(success => success && process.env.tweet && tweet(filePath));
+const run = () => {
+  withBrowser(async browser => {
+    const values = await Promise.all([takeScreenshot(browser), getSheetData()]);
+    const data = values[1];
+    const status = `Today so far: ${data.Today}\r\nAll Time High: ${data.AllTimeHigh}\r\n${shortUrl}`;
+    console.log(status);
+    if (doTweet) {
+      tweet(filePath, status);
+    }
+  });
+};
 
 setInterval(run, intervalMins * 60 * 1000);
 setImmediate(run);
