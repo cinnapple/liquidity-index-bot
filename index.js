@@ -78,20 +78,46 @@ const getSheetData = async () => {
   });
 };
 
-const tweet = async (file, status) => {
-  console.log("Tweeting...");
-  const data = fs.readFileSync(file);
-
-  // upload the media
-  const media = await twitterClient.post(`media/upload`, { media: data });
-  console.log(`Successfully uploaded the screenshot`);
-
-  // tweet about it
-  await twitterClient.post("statuses/update", {
-    status,
-    media_ids: media.media_id_string
+const delay = async nSecs => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve(true);
+    }, nSecs * 1000);
   });
-  console.log(`Successfully tweeted`);
+};
+
+const tweet = async (file, status) => {
+  let again = true;
+  let retryCount = 0;
+  while (again) {
+    try {
+      console.log("Tweeting...");
+      const data = fs.readFileSync(file);
+
+      // upload the media
+      const media = await twitterClient.post(`media/upload`, { media: data });
+      console.log(`Successfully uploaded the screenshot`);
+
+      // tweet about it
+      await twitterClient.post("statuses/update", {
+        status,
+        media_ids: media.media_id_string
+      });
+      console.log(`Successfully tweeted`);
+      again = false;
+    } catch (err) {
+      console.log(`Failed to tweet...`);
+      retryCount++;
+    }
+
+    if (retryCount > 5) {
+      console.log(`Exceeded the retry threshold...`);
+      again = false;
+    } else {
+      // wait for 5 seconds to retry.
+      await delay(5);
+    }
+  }
 };
 
 const run = () => {
@@ -101,7 +127,7 @@ const run = () => {
     const status = `Today so far: ${data.Today}\r\nAll Time High: ${data.AllTimeHigh}\r\n${shortUrl}`;
     console.log(status);
     if (doTweet) {
-      tweet(filePath, status);
+      await tweet(filePath, status);
     }
   });
 };
