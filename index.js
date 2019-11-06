@@ -4,19 +4,7 @@ const fs = require("fs");
 const https = require("https");
 require("dotenv").config();
 const doTweet = process.env.tweet === true || process.env.tweet === "true";
-
-const url =
-  "https://docs.google.com/spreadsheets/u/2/d/1pZ2POpljERK-oV3rusaCmq58U2badn5i9WOCIP9Wtmg/";
-const shortUrl = "https://bit.ly/2MCAbp6";
-const filePath = "out/pic.png";
 const intervalMins = 60 * 3; // every 3 hours
-const clip = {
-  x: 70,
-  y: 190,
-  width: 1300,
-  height: 800
-};
-
 const twitterClient = new twitter({
   consumer_key: process.env.consumer_key,
   consumer_secret: process.env.consumer_secret,
@@ -29,24 +17,33 @@ const withBrowser = async action => {
     args: ["--no-sandbox", "--disable-setuid-sandbox", "--lang=en-US,en"]
   });
   try {
-    await action(browser);
-    return true;
+    return await action(browser);
   } catch (e) {
     // don't handle the error - we'd rather want to keep trying
     console.log(e);
     return false;
   } finally {
-    browser.close();
+    await browser.close();
   }
 };
 
 const takeScreenshot = async browser => {
+  const filePath = "out/pic.png";
+  const url =
+    "https://docs.google.com/spreadsheets/u/2/d/1pZ2POpljERK-oV3rusaCmq58U2badn5i9WOCIP9Wtmg/";
+  const clip = {
+    x: 70,
+    y: 190,
+    width: 1300,
+    height: 800
+  };
   const page = await browser.newPage();
   await page.setViewport({ width: 1400, height: 1050 });
   await page.goto(url);
   await page.waitFor(5000);
   await page.screenshot({ path: filePath, clip });
   console.log(`Successfully took a screenshot`);
+  return filePath;
 };
 
 const getSheetData = async () => {
@@ -86,13 +83,32 @@ const delay = async nSecs => {
   });
 };
 
-const tweet = async (file, status) => {
+const tweet = async (filePath, data) => {
+  const msgDayProgress = `Day progress: ${Math.round(
+    (new Date().getUTCHours() / 24) * 100
+  )}%`;
+  const msgTodaySofar = `Today so far: ${data.Today}`;
+  const msgAllTimeHigh = `All Time High: ${data.AllTimeHigh}`;
+  const msgShortUrl = `https://bit.ly/2MCAbp6`;
+  const status = [
+    msgDayProgress,
+    msgTodaySofar,
+    msgAllTimeHigh,
+    msgShortUrl
+  ].join("\r\n");
+  console.log(`File -> ${filePath}`);
+  console.log(`Status -> ${JSON.stringify(status)}`);
+
+  if (!doTweet) {
+    return;
+  }
+
   let again = true;
-  let retryCount = 0;
   while (again) {
+    let retryCount = 0;
     try {
       console.log("Tweeting...");
-      const data = fs.readFileSync(file);
+      const data = fs.readFileSync(filePath);
 
       // upload the media
       const media = await twitterClient.post(`media/upload`, { media: data });
@@ -120,16 +136,12 @@ const tweet = async (file, status) => {
   }
 };
 
-const run = () => {
-  withBrowser(async browser => {
-    const values = await Promise.all([takeScreenshot(browser), getSheetData()]);
-    const data = values[1];
-    const status = `Today so far: ${data.Today}\r\nAll Time High: ${data.AllTimeHigh}\r\n${shortUrl}`;
-    console.log(status);
-    if (doTweet) {
-      await tweet(filePath, status);
-    }
-  });
+const run = async () => {
+  const [filePath, data] = await Promise.all([
+    withBrowser(takeScreenshot),
+    getSheetData()
+  ]);
+  await tweet(filePath, data);
 };
 
 setInterval(run, intervalMins * 60 * 1000);

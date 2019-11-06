@@ -4,7 +4,7 @@ services:
     container_name: liquidity-index-bot
     image: cinnapple/liquidity-index-bot
     volumes:
-      - ./.env:/app/env
+      - ./.env:/app/.env
       - ./out:/app/out
     command: node /app/index.js
     restart: always
