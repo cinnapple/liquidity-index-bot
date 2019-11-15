@@ -84,6 +84,7 @@ const delay = async nSecs => {
 };
 
 const tweet = async (filePath, data) => {
+  const msgTitle = "Liquidity Index for Bitso XRP/MXN (28-day moving trend)" 
   const msgDayProgress = `Day progress: ${Math.round(
     (new Date().getUTCHours() / 24) * 100
   )}%`;
@@ -91,6 +92,7 @@ const tweet = async (filePath, data) => {
   const msgAllTimeHigh = `All Time High: ${data.AllTimeHigh}`;
   const msgShortUrl = `https://bit.ly/2MCAbp6`;
   const status = [
+    msgTitle,
     msgDayProgress,
     msgTodaySofar,
     msgAllTimeHigh,
