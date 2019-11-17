@@ -1,0 +1,103 @@
+service:
+  name: liquidity-index-bot-aws
+
+plugins:
+  - serverless-step-functions
+  - serverless-webpack
+  - serverless-prune-plugin
+
+custom:
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+  prune:
+    automatic: true
+    number: 3
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  logRetentionInDays: 30
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "s3:*"
+      Resource: "arn:aws:s3:::liquidity-index-bot/*"
+  apiGateway:
+    minimumCompressionSize: 1024 # Enable gzip compression for responses > 1 KB
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    S3_BUCKET_NAME: liquidity-index-bot
+    TWEET: false
+    CONSUMER_KEY: "x"
+    CONSUMER_SECRET: "x" 
+    ACCESS_TOKEN_KEY: "x" 
+    ACCESS_TOKEN_SECRET: "x" 
+    GOOGLE_API_KEY: "x"
+
+functions:
+  takeScreenshot: 
+    handler: handler.takeScreenshot
+    timeout: 40 
+  getSheetData: 
+    handler: handler.getSheetData
+    timeout: 20 
+  tweet: 
+    handler: handler.tweet
+    timeout: 20 
+
+stepFunctions:
+  stateMachines:
+    liquidity-index-bot:
+      name: liquidity-index-bot
+      events: # every 3 hours 
+        - schedule: cron(10 0 * * ? *) 
+        - schedule: cron(10 3 * * ? *) 
+        - schedule: cron(10 6 * * ? *) 
+        - schedule: cron(10 9 * * ? *) 
+        - schedule: cron(10 12 * * ? *) 
+        - schedule: cron(10 15 * * ? *) 
+        - schedule: cron(10 18 * * ? *) 
+        - schedule: cron(10 21 * * ? *) 
+      definition:
+        Comment: Start Liquidity Index Bot
+        StartAt: FetchData
+        States:
+          FetchData:
+            Type: Parallel
+            Next: Tweet
+            Branches:
+              -
+                StartAt: TakeScreenshot
+                States:
+                  TakeScreenshot:
+                    Type: Task
+                    Resource:
+                      Fn::GetAtt: [takeScreenshot, Arn]
+                    End: true
+                    Retry:
+                      - ErrorEquals: [States.ALL]
+                        MaxAttempts: 5
+                        IntervalSeconds: 3
+              -
+                StartAt: GetSheetData 
+                States:
+                  GetSheetData:
+                    Type: Task
+                    Resource:
+                      Fn::GetAtt: [getSheetData, Arn]
+                    End: true
+                    Retry:
+                      - ErrorEquals: [States.ALL]
+                        MaxAttempts: 5
+                        IntervalSeconds: 3
+          Tweet:
+            Type: Task
+            InputPath: "$[1].body"
+            Resource:
+              Fn::GetAtt: [tweet, Arn]
+            End: true
+            Retry:
+              - ErrorEquals: [States.ALL]
+                MaxAttempts: 5
+                IntervalSeconds: 3
