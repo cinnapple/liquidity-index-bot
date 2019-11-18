@@ -1,13 +1,33 @@
 {
-  "name": "liquidity-index-bot",
+  "name": "liquidity-index-bot-aws",
   "version": "1.0.0",
-  "main": "index.js",
-  "repository": "git@github.com:cinnapple/liquidity-index-bot.git",
-  "author": "Yu Sasaki <ysasaki.g.drive@gmail.com>",
-  "license": "MIT",
+  "description": "Serverless webpack example using Typescript",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "dependencies": {
-    "dotenv": "^8.2.0",
-    "puppeteer": "^1.20.0",
+    "chrome-aws-lambda": "^2.0.0",
+    "puppeteer-core": "^2.0.0",
+    "request-promise": "^4.2.5",
+    "source-map-support": "^0.5.10",
     "twitter": "^1.7.1"
-  }
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.17",
+    "@types/node": "^10.12.18",
+    "@types/puppeteer-core": "^1.9.0",
+    "@types/request-promise": "^4.1.44",
+    "@types/twitter": "^1.7.0",
+    "fork-ts-checker-webpack-plugin": "^3.0.1",
+    "serverless-prune-plugin": "^1.4.1",
+    "serverless-step-functions": "^2.11.0",
+    "serverless-webpack": "^5.2.0",
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.2.4",
+    "webpack": "^4.29.0",
+    "webpack-node-externals": "^1.7.2"
+  },
+  "author": "The serverless webpack authors (https://github.com/elastic-coders/serverless-webpack)",
+  "license": "MIT"
 }
