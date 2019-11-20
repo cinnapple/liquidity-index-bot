@@ -1,0 +1,35 @@
+version: "3.5"
+services:
+  redis:
+    container_name: redis
+    image: redis
+    ports: 
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: always
+    networks:
+      - my-network
+  coinph-worker:
+    container_name: coinph-worker
+    build: .
+    env_file:
+      - ./.env
+    volumes:
+      - ./index.js:/usr/app/index.js
+      - ./package.json:/usr/app/package.json
+      - ./package-lock.json:/usr/app/package-lock.json
+      - ./node_modules:/usr/app/node_modules
+    command: npm start
+    depends_on:
+      - redis
+    networks:
+      - my-network
+
+volumes:
+  redis-data:
+    driver: local
+
+networks:
+  my-network:
+    name: my-network 

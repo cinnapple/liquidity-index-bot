@@ -1,0 +1,72 @@
+service:
+  name: coinph-api
+
+plugins:
+  - serverless-webpack
+  - serverless-prune-plugin
+
+custom:
+  myStage: ${opt:stage, self:provider.stage}
+  defaultStage: dev
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+  prune:
+    automatic: true
+    number: 3
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  logRetentionInDays: 3 
+  apiGateway:
+    minimumCompressionSize: 1024 # Enable gzip compression for responses > 1 KB
+  environment:
+    STAGE: ${self:custom.myStage}
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+
+functions:
+  update: 
+    handler: handler.update
+    events:
+      - http:
+          path: coinph-daily-volume
+          method: post
+          cors: true
+  getList: 
+    handler: handler.getList
+    events:
+      - http:
+          path: coinph-daily-volume
+          method: get
+          cors: true
+
+resources:
+  Resources:
+    CoinPhDailyVolume:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: N
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: "${self:provider.environment.DYNAMODB_TABLE}"

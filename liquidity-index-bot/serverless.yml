@@ -51,14 +51,14 @@ stepFunctions:
     liquidity-index-bot:
       name: liquidity-index-bot
       events: # every 3 hours 
-        - schedule: cron(10 0 * * ? *) 
-        - schedule: cron(10 3 * * ? *) 
-        - schedule: cron(10 6 * * ? *) 
-        - schedule: cron(10 9 * * ? *) 
-        - schedule: cron(10 12 * * ? *) 
-        - schedule: cron(10 15 * * ? *) 
-        - schedule: cron(10 18 * * ? *) 
-        - schedule: cron(10 21 * * ? *) 
+        - schedule: cron(0 1 * * ? *) 
+        - schedule: cron(0 4 * * ? *) 
+        - schedule: cron(0 7 * * ? *) 
+        - schedule: cron(0 10 * * ? *) 
+        - schedule: cron(0 13 * * ? *) 
+        - schedule: cron(0 16 * * ? *) 
+        - schedule: cron(0 17 * * ? *) 
+        - schedule: cron(0 22 * * ? *) 
       definition:
         Comment: Start Liquidity Index Bot
         StartAt: FetchData
