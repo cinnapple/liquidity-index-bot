@@ -1,3 +1,5 @@
 .serverless
 .webpack
+.env
+.redisConsole.log
 node_modules

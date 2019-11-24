@@ -1,0 +1,21 @@
+{
+  "name": "coinph-worker",
+  "version": "1.0.0",
+  "description": "Coinph worker",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ioredis": "^4.14.1",
+    "reconnecting-websocket": "^4.2.0",
+    "request": "^2.88.0",
+    "websocket": "^1.0.30",
+    "ws": "^7.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.1"
+  }
+}

@@ -1,0 +1,4 @@
+redisUrl=redis
+redisPort=6379
+redisKey=liquidity-index-bot.coinph-worker.daily-summary
+postApi=https://YOUR_API_GATEWAY.amazonaws.com/STAGE/coinph-daily-volume
