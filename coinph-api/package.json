@@ -9,6 +9,7 @@
   "dependencies": {
     "aws-sdk": "^2.578.0",
     "csvtojson": "^2.0.10",
+    "date-fns": "^2.8.1",
     "source-map-support": "^0.5.10"
   },
   "devDependencies": {

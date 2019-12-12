@@ -5,35 +5,38 @@ import * as rp from "request-promise"
 import * as Twitter from "twitter"
 import * as chromium from "chrome-aws-lambda"
 import * as puppeteer from "puppeteer-core"
+import { config, Pair } from "./config"
 
-type SheetData = {
-  CurrentDate: string
-  Today: string
-  AllTimeHigh: string
+type Params = {
+  pairConfig: Pair,
+  sheetData: {
+    CurrentDate: string
+    Today: string
+    AllTimeHigh: string
+  }
 }
 
-const _config = {
-  doTweet: process.env.TWEET === "true",
-  s3_bucket_name: process.env.S3_BUCKET_NAME,
-  consumer_key: process.env.CONSUMER_KEY,
-  consumer_secret: process.env.CONSUMER_SECRET,
-  access_token_key: process.env.ACCESS_TOKEN_KEY,
-  access_token_secret: process.env.ACCESS_TOKEN_SECRET,
-  google_api_key: process.env.GOOGLE_API_KEY,
-  filePaht: "screenshot.png",
-  sheetId: "1pZ2POpljERK-oV3rusaCmq58U2badn5i9WOCIP9Wtmg",
-}
+const s3 = new S3();
+const twitterClient = new Twitter({ ...config.twitter });
 
-const _s3 = new S3();
-
-export const takeScreenshot: APIGatewayProxyHandler = async (_event, _context) => {
-  const url = `https://docs.google.com/spreadsheets/u/2/d/${_config.sheetId}/`;
-  const clip = {
-    x: 70,
-    y: 190,
-    width: 1300,
-    height: 800
+export const configure = async (input: string) => {
+  const pairs = input.split(",")
+  console.log(pairs)
+  const paramsArray = pairs.map(pair => ({
+    pairConfig: config.pairs[pair],
+    sheetData: undefined,
+    previousTweet: undefined
+  }))
+  console.log(paramsArray)
+  return {
+    statusCode: 200,
+    body: paramsArray
   };
+}
+
+export const takeScreenshot = async (params: Params) => {
+  console.log(params)
+  const url = `https://docs.google.com/spreadsheets/u/2/d/${params.pairConfig.sheetId}/`;
   let browser: puppeteer.Browser = null;
   try {
     browser = await puppeteer.launch({
@@ -43,11 +46,11 @@ export const takeScreenshot: APIGatewayProxyHandler = async (_event, _context) =
       headless: chromium.headless,
     });
     const page = await browser.newPage();
-    await page.setViewport({ width: 1400, height: 1050 });
+    await page.setViewport({ width: params.pairConfig.width, height: params.pairConfig.height });
     await page.goto(url);
     await page.waitFor(5000);
-    const buf = await page.screenshot({ clip });
-    await _s3.upload({ Body: buf, Bucket: _config.s3_bucket_name, Key: _config.filePaht }).promise()
+    const buf = await page.screenshot({ clip: params.pairConfig.clip });
+    await s3.upload({ Body: buf, Bucket: config.s3_bucket_name, Key: params.pairConfig.filePath }).promise()
     return {
       statusCode: 200,
       body: "ok"
@@ -59,56 +62,80 @@ export const takeScreenshot: APIGatewayProxyHandler = async (_event, _context) =
   }
 }
 
-export const getSheetData: APIGatewayProxyHandler = async (_event, _context) => {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${_config.sheetId}/values/Aggregate!A1:D100?key=${_config.google_api_key}`;
+export const getSheetData = async (params: Params) => {
+  console.log(params)
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${params.pairConfig.sheetId}/values/Aggregate!A1:D100?key=${config.googleApiKey}`;
   const res = JSON.parse(await rp.get(url))
-  const data: SheetData = {
+  params.sheetData = {
     CurrentDate: res.values.find(r => r.includes("Current Date"))[3],
     Today: res.values.find(r => r.includes("Today"))[3],
     AllTimeHigh: res.values.find(r => r.includes("All Time High"))[3]
   }
   return {
     statusCode: 200,
-    body: JSON.stringify(data)
+    body: params
   }
 }
 
-export const tweet: APIGatewayProxyHandler = async (sheetDataJson, _context) => {
-  const twitterClient = new Twitter({
-    consumer_key: _config.consumer_key,
-    consumer_secret: _config.consumer_secret,
-    access_token_key: _config.access_token_key,
-    access_token_secret: _config.access_token_secret
-  });
+export const tweet = async (paramsArray: any[]) => {
+  console.log(`paramsArray: ${JSON.stringify(paramsArray)}`)
 
-  const imageData = await _s3.getObject({ Bucket: _config.s3_bucket_name, Key: _config.filePaht }).promise()
-  const mediaData = imageData.Body.toString('base64')
-  const data: SheetData = JSON.parse(sheetDataJson as any)
-  const status = [
-    "Liquidity Index for Bitso XRP/MXN (28-day moving trend)",
-    `Day progress: ${Math.round((new Date().getUTCHours() / 24) * 100)}%`,
-    `Today so far: ${data.Today}`,
-    `All Time High: ${data.AllTimeHigh}`,
-    `Data: https://bit.ly/2MCAbp6`
-  ].join("\r\n");
-
-  if (!_config.doTweet) {
-    return {
-      statusCode: 200,
-      body: "Configured not to tweet. Exiting."
-    }
+  const previousTweet = {
+    tweetId: undefined,
+    userName: undefined
   }
 
-  // upload the media
-  const mediaResult = await twitterClient.post(`media/upload`, { media_data: mediaData });
-  console.log(`Successfully uploaded the screenshot`);
+  for (let results of paramsArray) {
 
-  // tweet about it
-  await twitterClient.post("statuses/update", {
-    status,
-    media_ids: mediaResult.media_id_string
-  });
-  console.log(`Successfully tweeted`);
+    console.log(`results: ${JSON.stringify(results)}`)
+
+    const params: Params = results[1].body
+    console.log(`params: ${JSON.stringify(params)}`)
+
+    const imageData = await s3.getObject({ Bucket: config.s3_bucket_name, Key: params.pairConfig.filePath }).promise()
+    const mediaData = imageData.Body.toString('base64')
+    const status = [
+      params.pairConfig.title,
+      `Day progress: ${Math.round((new Date().getUTCHours() / 24) * 100)}%`,
+      `Today so far: ${params.sheetData.Today}`,
+      `All Time High: ${params.sheetData.AllTimeHigh}`,
+      `Data: ${params.pairConfig.dataUrl}`
+    ].join("\r\n");
+    console.log(status)
+
+    if (!config.doTweet) {
+      console.log("Configured not to tweet. Exiting.")
+      return {
+        statusCode: 200,
+        body: JSON.stringify(params)
+      }
+    }
+
+    // upload the media
+    const mediaResult = await twitterClient.post(`media/upload`, { media_data: mediaData });
+    console.log(`Successfully uploaded the screenshot. Result: ${JSON.stringify(mediaResult)}`);
+
+    // tweet about it
+    const tweetData = {
+      status,
+      media_ids: mediaResult.media_id_string,
+      in_reply_to_status_id: undefined
+    }
+    if (previousTweet.tweetId) {
+      tweetData.in_reply_to_status_id = previousTweet.tweetId
+      tweetData.status = `@${previousTweet.userName}\r\n${tweetData.status}`
+    }
+    console.log(`posting ${JSON.stringify(tweetData)}`)
+    const result = await twitterClient.post("statuses/update", {
+      status,
+      media_ids: mediaResult.media_id_string,
+    });
+    console.log(`Successfully tweeted. Result: ${JSON.stringify(result)}`);
+
+    previousTweet.tweetId = result.id_str
+    previousTweet.userName = result.user.screen_name
+
+  }
 
   return {
     statusCode: 200,

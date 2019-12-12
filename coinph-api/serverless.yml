@@ -56,6 +56,13 @@ functions:
           path: coinph-daily-volume
           method: get
           cors: true
+          request:
+            parameters:
+              querystrings:
+                recordNum: true # number of records to fetch
+  migrate: 
+    handler: handler.migrate
+    timeout: 900 
   importFromCsv: 
     handler: handler.importFromCsv
     timeout: 300 
@@ -75,10 +82,16 @@ resources:
           -
             AttributeName: id
             AttributeType: N
+          -
+            AttributeName: date 
+            AttributeType: N
         KeySchema:
           -
             AttributeName: id
             KeyType: HASH
+          -
+            AttributeName: date 
+            KeyType: RANGE 
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1

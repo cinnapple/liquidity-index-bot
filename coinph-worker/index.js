@@ -39,10 +39,18 @@ const tryParseMessage = (msg) => {
     return res[0];
 }
 
+const getDateFromTimestamp = (timestamp) => {
+    let singaporeTime = new Date(timestamp).toLocaleString("en-US", { timeZone: "Asia/Singapore" });
+    singaporeTime = new Date(singaporeTime)
+    const t = singaporeTime.toISOString()
+    console.log(t)
+    return t.split("T")[0]
+}
+
 const updateData = async (res) => {
     try {
         const [seq, id, qt, px, timestamp] = res
-        const utcDate = new Date(timestamp).toISOString().split("T")[0]
+        const date = getDateFromTimestamp(timestamp)
         let dailyData = JSON.parse(await redis.get(config.redisKey)) || { ...dailyDataDefault }
 
         // if the sequence is the same, do not update the data
@@ -52,7 +60,7 @@ const updateData = async (res) => {
         }
 
         // if date has changed, update the previous day's closing, and reset the values for today.
-        if (dailyData.Date && dailyData.Date !== utcDate) {
+        if (dailyData.Date && dailyData.Date !== date) {
             postData()
             dailyData = {
                 ...dailyDataDefault,
@@ -62,7 +70,7 @@ const updateData = async (res) => {
 
         // update the data.
         dailyData.Seq = seq
-        dailyData.Date = utcDate
+        dailyData.Date = date
         dailyData.High = (dailyData.High < px) ? px : dailyData.High
         dailyData.Low = (dailyData.Low > px) ? px : dailyData.Low
         dailyData.Close = px;
@@ -80,10 +88,11 @@ const postData = async () => {
     const dailyData = JSON.parse(await redis.get(config.redisKey))
 
     if (dailyData) {
-        console.log(`Posting the daily summary...`)
+        const date = parseInt(dailyData.Date.replace(new RegExp('-', 'g'), ''))
 
         const data = {
-            id: parseInt(dailyData.Date.replace(new RegExp('-', 'g'), '')),
+            date,
+            id: date,
             high: dailyData.High,
             low: dailyData.Low,
             open: dailyData.Open,
@@ -91,15 +100,17 @@ const postData = async () => {
             volume: dailyData.Volume
         }
 
+        console.log(`Posting the daily summary ${JSON.stringify(data)} to ${config.postApi}`)
+
         request.post(
             config.postApi,
             { json: data },
             (err, res, body) => {
                 if (res && res.statusCode !== 200) {
-                    console.log(`An error occurred while posting daily summary ${JSON.stringify(data)} to the storage api ${config.postApi}. Reason: ${body.message}`)
+                    console.log(`...An error occurred while posting daily summary. Reason: ${body.message}`)
                     return
                 }
-                console.log(`Successfully posted the daily summary ${data.id}`)
+                console.log(`...Successfully posted the daily summary`)
             }
         )
     }

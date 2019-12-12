@@ -1,11 +1,13 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import { DynamoDB, S3 } from "aws-sdk"
 import 'source-map-support/register';
+import { addDays, startOfToday } from "date-fns"
 import * as csv from "csvtojson"
 
 const dynamoDb = new DynamoDB.DocumentClient()
 const s3 = new S3();
 const tableName = process.env.DYNAMODB_TABLE
+const tableName_toMigrate = process.env.DYNAMODB_TABLE_NEW
 
 interface IDataSchema {
   id: number, // id (YYYYMMDD) 
@@ -43,17 +45,61 @@ export const update: APIGatewayProxyHandler = async (_event, _context) => {
   }
 }
 
-export const getList: APIGatewayProxyHandler = async (_event, _context) => {
+const _getList = async (recordNum?: number) => {
+
+  let filter = {}
+
+  if (recordNum) {
+    const cutoffDate = addDays(startOfToday(), -recordNum).toISOString()
+    const cutoffDateParam = parseInt(cutoffDate.split("T")[0].replace(new RegExp('-', 'g'), ''))
+    filter = {
+      FilterExpression: "#date >= :date",
+      ExpressionAttributeNames: { "#date": "date" },
+      ExpressionAttributeValues: {
+        ":date": cutoffDateParam
+      }
+    }
+  }
+
   const params: DynamoDB.DocumentClient.ScanInput = {
-    TableName: tableName
+    TableName: tableName,
+    ...filter
   }
 
   const data = await dynamoDb.scan(params).promise()
-  const sortedData = data.Items.sort((a, b) => a.id > b.id ? 1 : a.id < b.id ? -1 : 0)
+  data.Items.sort((a, b) => a.date > b.date ? 1 : a.date < b.date ? -1 : 0)
+  return data.Items
+}
+
+export const getList: APIGatewayProxyHandler = async (_event, _context) => {
+  const recordNum = parseInt(_event.queryStringParameters.recordNum)
+  const records = await _getList(recordNum)
+  return {
+    statusCode: 200,
+    body: JSON.stringify(records)
+  }
+}
+
+export const migrate: APIGatewayProxyHandler = async (_event, _context) => {
+  const oldRecords = await _getList()
+
+  for (let r of oldRecords) {
+
+    console.log(`processing record#${r.id}`)
+    const params: DynamoDB.DocumentClient.PutItemInput = {
+      TableName: tableName_toMigrate,
+      Item: {
+        ...r,
+        date: r.id
+      }
+    }
+
+    await dynamoDb.put(params).promise()
+  }
 
   return {
     statusCode: 200,
-    body: JSON.stringify(sortedData)
+    body: "ok"
   }
 }
 

@@ -1,0 +1,13 @@
+# create ".env" file with the following variables
+
+# if false, the tweet step will not tweet 
+TWEET=false
+
+# twitter api keys
+CONSUMER_KEY=XXX
+CONSUMER_SECRET=YYY
+ACCESS_TOKEN_KEY=ZZZ
+ACCESS_TOKEN_SECRET=AAA
+
+# google sheet api key
+GOOGLE_API_KEY=BBB
