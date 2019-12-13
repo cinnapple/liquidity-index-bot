@@ -54,7 +54,7 @@ stepFunctions:
         - schedule: cron(0 10 * * ? *) 
         - schedule: cron(0 13 * * ? *) 
         - schedule: cron(0 16 * * ? *) 
-        - schedule: cron(0 17 * * ? *) 
+        - schedule: cron(0 19 * * ? *) 
         - schedule: cron(0 22 * * ? *) 
       definition:
         Comment: Start Liquidity Index Bot

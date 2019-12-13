@@ -123,7 +123,7 @@ export const tweet = async (paramsArray: any[]) => {
     }
     if (previousTweet.tweetId) {
       tweetData.in_reply_to_status_id = previousTweet.tweetId
-      tweetData.status = `@${previousTweet.userName}\r\n${tweetData.status}`
+      tweetData.status = `@${previousTweet.userName}${tweetData.status}`
     }
     console.log(`posting ${JSON.stringify(tweetData)}`)
     const result = await twitterClient.post("statuses/update", {

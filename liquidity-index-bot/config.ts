@@ -35,7 +35,7 @@ export const config = {
             dataUrl: "https://bit.ly/2MCAbp6",
         },
         XRPPHP: {
-            title: `Liquidity Index for Coinph XRP/PHP (28-day moving trend)`,
+            title: `Liquidity Index for Coins.ph XRP/PHP (28-day moving trend)`,
             filePath: "xrpphp.png",
             sheetId: "11n81l3KBNEFUnx7PB7L-5ITjUjQGih9Tr7giVoDG-Wc",
             width: 1400,
