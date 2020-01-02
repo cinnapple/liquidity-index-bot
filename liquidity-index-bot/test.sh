@@ -1,0 +1,2 @@
+echo "Test: proxyCryptoCompare"
+sls invoke local -f proxyCryptoCompare --data '{"queryStringParameters": {"url": "https://min-api.cryptocompare.com/data/histoday?fsym=XRP&tsym=MXN&limit=365&aggregate=1&e=Bitso"}}'

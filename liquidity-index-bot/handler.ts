@@ -143,3 +143,16 @@ export const tweet = async (paramsArray: any[]) => {
   }
 
 }
+
+export const proxyCryptoCompare = async (params) => {
+  console.log(params)
+  const url = `${params.queryStringParameters.url}&api_key=${config.cryptoCompareApiKey}` 
+  console.log(url)
+  const res = JSON.parse(await rp.get(url))
+  console.log(res)
+  return {
+    statusCode: 200,
+    body: JSON.stringify(res.Data) 
+  }
+}
+

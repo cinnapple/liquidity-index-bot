@@ -43,5 +43,6 @@ export const config = {
             clip: { x: 70, y: 190, width: 1300, height: 800 },
             dataUrl: "https://bit.ly/38rRr9E",
         }
-    } as Pairs
+    } as Pairs,
+    cryptoCompareApiKey: process.env.CRYPTO_COMPARE_API_KEY
 }

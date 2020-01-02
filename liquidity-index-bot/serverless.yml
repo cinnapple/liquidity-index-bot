@@ -42,6 +42,18 @@ functions:
   tweet: 
     handler: handler.tweet
     timeout: 20 
+  proxyCryptoCompare: 
+    handler: handler.proxyCryptoCompare
+    timeout: 20 
+    events:
+      - http:
+          path: proxy-cryptocompare
+          method: get
+          cors: true
+          request:
+            parameters:
+              querystrings:
+                url: true # the url to send a request on behalf 
 
 stepFunctions:
   stateMachines:

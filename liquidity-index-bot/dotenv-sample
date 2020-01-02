@@ -11,3 +11,6 @@ ACCESS_TOKEN_SECRET=AAA
 
 # google sheet api key
 GOOGLE_API_KEY=BBB
+
+# crypto compare api key
+CRYPTO_COMPARE_API_KEY=XXX
