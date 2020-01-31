@@ -34,6 +34,15 @@ export const config = {
             clip: { x: 70, y: 190, width: 1300, height: 800 },
             dataUrl: "https://bit.ly/2MCAbp6",
         },
+        XRPAUD: {
+            title: `Liquidity Index for BTC Markets XRP/AUD (28-day moving trend)`,
+            filePath: "xrpaud.png",
+            sheetId: "134Likrs0FWvQosyHlx2Z6JvUhCpY1uLI1ujT9dfkhmc",
+            width: 1400,
+            height: 1050,
+            clip: { x: 70, y: 190, width: 1300, height: 800 },
+            dataUrl: "http://bit.ly/2S3ttu5",
+        },
         XRPPHP: {
             title: `Liquidity Index for Coins.ph XRP/PHP (28-day moving trend)`,
             filePath: "xrpphp.png",
