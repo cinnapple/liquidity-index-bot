@@ -74,7 +74,7 @@ stepFunctions:
         States:
           Configure:
             Type: Task 
-            Parameters: "XRPMXN,XRPAUD,XRPPHP"
+            Parameters: "XRPMXN,XRPAUD,XRPPHP,XRPEUR"
             Resource:
               Fn::GetAtt: [configure, Arn]
             Next: FetchEachPair

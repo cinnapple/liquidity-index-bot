@@ -51,6 +51,15 @@ export const config = {
             height: 1050,
             clip: { x: 70, y: 190, width: 1300, height: 800 },
             dataUrl: "https://bit.ly/38rRr9E",
+        },
+        XRPEUR: {
+            title: `Liquidity Index for Bitstamp XRP/EUR (28-day moving trend)`,
+            filePath: "xrpeur.png",
+            sheetId: "1O-aYsBe3MBG5lVnaFb8FeyNzPyeYEygRORWL2xspfc0",
+            width: 1400,
+            height: 1050,
+            clip: { x: 70, y: 190, width: 1300, height: 800 },
+            dataUrl: "https://gyutto.site/7CXK",
         }
     } as Pairs,
     cryptoCompareApiKey: process.env.CRYPTO_COMPARE_API_KEY
