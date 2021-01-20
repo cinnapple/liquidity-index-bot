@@ -1,13 +1,11 @@
 import * as puppeteer from "puppeteer-core"
 
 export type Pair = {
-    title: string
     filePath: string
     sheetId: string
     width: number
     height: number
     clip: puppeteer.BoundingBox
-    dataUrl: string
 }
 
 export type Pairs = {
@@ -26,40 +24,32 @@ export const config = {
     googleApiKey: process.env.GOOGLE_API_KEY,
     pairs: {
         XRPMXN: {
-            title: `Liquidity Index for Bitso XRP/MXN (28-day moving trend)`,
             filePath: "xrpmxn.png",
             sheetId: "1pZ2POpljERK-oV3rusaCmq58U2badn5i9WOCIP9Wtmg",
             width: 1400,
             height: 1050,
             clip: { x: 70, y: 190, width: 1300, height: 800 },
-            dataUrl: "https://bit.ly/2MCAbp6",
         },
         XRPAUD: {
-            title: `Liquidity Index for BTC Markets XRP/AUD (28-day moving trend)`,
             filePath: "xrpaud.png",
             sheetId: "134Likrs0FWvQosyHlx2Z6JvUhCpY1uLI1ujT9dfkhmc",
             width: 1400,
             height: 1050,
             clip: { x: 70, y: 190, width: 1300, height: 800 },
-            dataUrl: "http://bit.ly/2S3ttu5",
         },
         XRPPHP: {
-            title: `Liquidity Index for Coins.ph XRP/PHP (28-day moving trend)`,
             filePath: "xrpphp.png",
             sheetId: "11n81l3KBNEFUnx7PB7L-5ITjUjQGih9Tr7giVoDG-Wc",
             width: 1400,
             height: 1050,
             clip: { x: 70, y: 190, width: 1300, height: 800 },
-            dataUrl: "https://bit.ly/38rRr9E",
         },
         XRPEUR: {
-            title: `Liquidity Index for Bitstamp XRP/EUR (28-day moving trend)`,
             filePath: "xrpeur.png",
             sheetId: "1O-aYsBe3MBG5lVnaFb8FeyNzPyeYEygRORWL2xspfc0",
             width: 1400,
             height: 1050,
             clip: { x: 70, y: 190, width: 1300, height: 800 },
-            dataUrl: "https://gyutto.site/7CXK",
         }
     } as Pairs,
     cryptoCompareApiKey: process.env.CRYPTO_COMPARE_API_KEY

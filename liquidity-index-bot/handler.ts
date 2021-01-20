@@ -1,4 +1,3 @@
-import { APIGatewayProxyHandler } from 'aws-lambda';
 import { S3 } from "aws-sdk";
 import 'source-map-support/register';
 import * as rp from "request-promise"
@@ -13,6 +12,8 @@ type Params = {
     CurrentDate: string
     Today: string
     AllTimeHigh: string
+    Title: string
+    DataUrl: string
   }
 }
 
@@ -69,7 +70,9 @@ export const getSheetData = async (params: Params) => {
   params.sheetData = {
     CurrentDate: res.values.find(r => r.includes("Current Date"))[3],
     Today: res.values.find(r => r.includes("Today"))[3],
-    AllTimeHigh: res.values.find(r => r.includes("All Time High"))[3]
+    AllTimeHigh: res.values.find(r => r.includes("All Time High"))[3],
+    Title: res.values.find(r => r.includes("Title"))[2],
+    DataUrl: res.values.find(r => r.includes("DataUrl"))[2]
   }
   return {
     statusCode: 200,
@@ -95,11 +98,11 @@ export const tweet = async (paramsArray: any[]) => {
     const imageData = await s3.getObject({ Bucket: config.s3_bucket_name, Key: params.pairConfig.filePath }).promise()
     const mediaData = imageData.Body.toString('base64')
     const status = [
-      params.pairConfig.title,
+      params.sheetData.Title,
       `Day progress: ${Math.round((new Date().getUTCHours() / 24) * 100)}%`,
       `Today so far: ${params.sheetData.Today}`,
       `All Time High: ${params.sheetData.AllTimeHigh}`,
-      `Data: ${params.pairConfig.dataUrl}`
+      `Data: ${params.sheetData.DataUrl}`
     ].join("\r\n");
     console.log(status)
 

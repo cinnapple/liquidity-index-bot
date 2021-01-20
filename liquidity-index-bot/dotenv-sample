@@ -14,3 +14,6 @@ GOOGLE_API_KEY=BBB
 
 # crypto compare api key
 CRYPTO_COMPARE_API_KEY=XXX
+
+# S3 bucket name
+S3_BUCKET_NAME=liquidity-index-bot
